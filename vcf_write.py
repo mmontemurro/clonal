@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+
+##############################################################
+#                                                            #
+#   Template script to write VCF files from scratch          #
+#   with the vcfpy library                                   #
+#   (https://vcfpy.readthedocs.io/en/master/index.html#)     #
+#                                                            #
+##############################################################
+
 from collections import OrderedDict
 import argparse
 import itertools
