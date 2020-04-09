@@ -36,7 +36,7 @@ def main():
     # In this case, the header will contain a line storing the name of the program which generated 
     # the file. We also add the information about the name of the sample which have been analyzed
 
-    header = vcfpy.Header(lines=[vcfpy.HeaderLine(key="source", value=sys.argv[0]), vcfpy.HeaderLine(key="fileformat", value="VCFv4.3"), vcfpy.HeaderLine(key="fileDate", value=date.today().strftime("%d/%m/%Y")) ], samples=vcfpy.SamplesInfos(["Sample1"]))
+    header = vcfpy.Header(lines=[vcfpy.HeaderLine(key="source", value=sys.argv[0]), vcfpy.HeaderLine(key="fileformat", value="VCFv4.3"), vcfpy.HeaderLine(key="fileDate", value=date.today().strftime("%d/%m/%Y")) ], samples=vcfpy.SamplesInfos(["Sample1", "Sample2"]))
     
     # Tuples of valid entries -----------------------------------------------------
     #
@@ -82,9 +82,13 @@ def main():
     with vcfpy.Writer.from_path(outvcf, header) as writer:
         
         # creating one record
+        calls = []
+        calls.append(vcfpy.Call("Sample1", OrderedDict([("GT", "0/1"),("DP", "47")])))
+        calls.append(vcfpy.Call("Sample2", OrderedDict([("GT", "0/1"),("DP", "31")])))
+
         record = vcfpy.Record(
                 CHROM="1", POS=1, ID=[], REF="C", ALT=[vcfpy.Substitution(type_="SNV", value="G")], QUAL=None, FILTER=["PASS"], INFO={"DP":"50", "MUT":0}, FORMAT=["GT","DP"],
-            calls=[vcfpy.Call("Sample1", OrderedDict([("GT", "0/1"),("DP", "47")]))]
+            calls=calls
        )
         #record.add_format(key="GT")
         #record.calls.append(vcfpy.Call("Sample1", OrderedDict([("GT", "0|1")])))
