@@ -37,19 +37,21 @@ def main():
     parser.add_argument("sample_name", metavar='sample1', action='store',
                 help="Sample identifier.", type=str)
 
+    parser.add_argument("vcf", metavar='file.vcf', action='store',
+                help="VCF file storing bulk variants.", type=str)
 
 
     parser.add_argument("out_prefix", metavar="outdir/sample", action="store",
         help="Output VCF file prefix.", type=str)
 
     #parser.add_argument("--sample_name2", metavar='sample2', action='store',
-    #                            help="Another sample name", type=str)
+                                help="Another sample name", type=str)
 
     args = parser.parse_args()
-    bam= args.bam
+    bams= args.bam
     invcf = args.vcf
     sample = args.sample_name
-    outvcf = args.out_prefix + ".snpseeker.vcf"
+    outvcf = args.out_prefix
 
     '''
     if args.sample_name2:
@@ -107,54 +109,51 @@ def main():
     #for each mutation in the vcf file
     for record_in in reader:
     # filter out indels: only interested in snvs in this analysis phase
-        if not record_in.is_snv():
-            continue
-        chrom = record_in.CHROM
-        pos = record_in.POS-1 #to correct on 1-based positions
-        ref = record_in.REF
-        alt = record_in.ALT[0].value  #record.ALT is a list by construction which contains only one value
-                                    # if the mutation is a SNV
-        #line += [call.data.get('GT') or './.' for call in record.calls]
+    if not record_in.is_snv():
+        continue
+    chrom = record_in.CHROM
+    pos = record_in.POS-1 #to correct on 1-based positions
+    ref = record_in.REF
+    alt = record_in.ALT[0].value  #record.ALT is a list by construction which contains only one value
+                                # if the mutation is a SNV
+    #line += [call.data.get('GT') or './.' for call in record.calls]
 
-        #look for the pileup in the samfile at position (chrom,pos)
-        for pileupcolumn in samfile.pileup(chrom, pos, pos+1, stepper='all', truncate=True, max_depth=10000):
-            #number of reads at this position
-            sdp = pileupcolumn.n
-            #number of supporting reads for the alternate base
-            ad = 0
-            rd = 0
-            dp = 0
-            af = 0.0
-            for base in pileupcolumn.pileups:
-                # .is_del -> the base is a deletion?
-                # .is_refskip -> the base is a N in the CIGAR string ?
-                if not base.is_del and not base.is_refskip and not base.alignment.mapping_quality < 30:
-                    dp += 1
-                    if base.alignment.query_sequence[base.query_position] == alt:
-                        ad += 1
-                    elif base.alignment.query_sequence[base.query_position] == ref:
-                        rd += 1
+    #look for the pileup in the samfile at position (chrom,pos)
+    for pileupcolumn in samfile.pileup(chrom, pos, target+1, stepper='all', truncate=True, max_depth=10000):
+        #number of reads at this position
+        sdp = pileupcolumn.n
+        #number of supporting reads for the alternate base
+        ad = 0
+        rd = 0
+        dp = 0
+        for base in pileupcolumn.pileups:
+            # .is_del -> the base is a deletion?
+            # .is_refskip -> the base is a N in the CIGAR string ?
+            if not base.is_del and not base.is_refskip and not base.alignment.mapping_quality < 30:
+                dp += 1
+                if base.alignment.query_sequence[base.query_position] == alt:
+                    ad += 1
+                elif base.alignment.query_sequence[base.query_position] == ref:
+                    rd += 1
 
-        if ad > 0:
-            af = ad / (rd + ad)
-            supp = 1
-            gt = "0/1" #temporary, all the supported mutations are set to 0/1
-        else:
-            supp = 0
-            gt = "0/0" 
+    if ad > 0:
+        supp = 1
+        gt = "0/1" #temporary, all the supported mutations are set to 0/1
+    else:
+        supp = 0
+        gt = "0/0" 
 
+    af = ad / (rd + ad)
 
-        #af = ad / (rd + ad)
-
-        info_d = {}
+    info_d = {}
         info_d['SUPP'] = supp
         for f in record_in.FORMAT:
             info_d[f] = record_in.calls[0].data.get(f)
 
-        record_out = vcfpy.Record(CHROM=chrom, POS=pos+1, ID=[], REF=ref, ALT=[vcfpy.Substitution(type_="SNV", value=alt)], QUAL=None, FILTER=[], INFO=info_d, FORMAT=["GT","SDP","DP","RD","AD","AF"],
-                calls=[vcfpy.Call(sample, OrderedDict([("GT", gt), ("SDP",sdp), ("DP", dp), ("RD", rd), ("AD", ad), ("AF", af)]))]
-           )
-        writer.write_record(record_out)
+    record_out = vcfpy.Record(CHROM=chrom, POS=pos+1, ID=[], REF=ref, ALT=[vcfpy.Substitution(type_="SNV", value=alt)], QUAL=None, FILTER=[], INFO=info_d, FORMAT=["GT","SDP","DP","RD","AD","AF"],
+            calls=[vcfpy.Call("Sample1", OrderedDict([("GT", gt), ("SDP",sdp), ("DP", dp), ("RD", rd), ("AD", ad), ("AF", af)]))]
+       )
+    writer.write_record(record_out)
 
 
     reader.close()
