@@ -62,7 +62,7 @@ def main():
     samfile = pysam.AlignmentFile(bam, "rb")
 
     #build the header of the output vcf
-    header_out = vcfpy.Header(lines=[vcfpy.HeaderLine(key="source", value=sys.argv[0]), vcfpy.HeaderLine(key="fileformat", value="VCFv4.3"), vcfpy.HeaderLine(key="fileDate", value=date.today().strftime("%d/%m/%Y")) ], samples=vcfpy.SamplesInfos([sample]))
+    header_out = vcfpy.Header(lines=[vcfpy.HeaderLine(key="fileformat", value="VCFv4.3"), vcfpy.HeaderLine(key="source", value=sys.argv[0]), vcfpy.HeaderLine(key="fileDate", value=date.today().strftime("%d/%m/%Y")) ], samples=vcfpy.SamplesInfos([sample]))
 
     # sample header lines
     header_out.add_line(vcfpy.HeaderLine(key="SampleName", value=sample))
