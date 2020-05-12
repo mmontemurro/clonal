@@ -89,7 +89,7 @@ def main():
             for call in calls:    
                 d[c]['dp'] = d[c]['dp'] + call.data.get('DP') 
                 d[c]['rd'] = d[c]['rd'] + call.data.get('RD')
-                d[c]['ad'] = d[c]['dp'] + call.data.get('AD')
+                d[c]['ad'] = d[c]['ad'] + call.data.get('AD')
 
             if d[c]['ad'] > 0:
                 d[c]['gt'] = "0/1"
