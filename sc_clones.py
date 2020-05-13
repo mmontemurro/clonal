@@ -18,7 +18,6 @@ from scipy.stats import fisher_exact
 from statsmodels.stats.multitest import multipletests
 
 def read_vcf(path, input_type):
-
     if input_type == 'vcf':
         with open(path, 'r') as f:
             lines = [l for l in f if not l.startswith('##')]
